@@ -387,8 +387,8 @@ end
 minetest.register_abm({
 	label = "Nether portal teleportation and particles",
 	nodenames = {"mcl_portals:portal"},
-	interval = 1,
-	chance = 2,
+	interval = 150,
+	chance = 1500,
 	action = function(pos, node)
 		minetest.add_particlespawner({
 			amount = 32,
