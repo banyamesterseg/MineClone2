@@ -1428,7 +1428,7 @@ local monster_attack = function(self)
 
 	for n = 1, #objs do
 		if objs[n]:is_player() then
-			privs = minetest.get_privs(get_player_name())
+			privs = minetest.get_player_privs(objs[n]:get_player_name())
 			if mobs.invis[ objs[n]:get_player_name() ] or privs.invincible or not privs.interact then
 				type = ""
 			else
