@@ -1427,11 +1427,9 @@ local monster_attack = function(self)
 	local objs = minetest.get_objects_inside_radius(s, self.view_range)
 
 	for n = 1, #objs do
-
 		if objs[n]:is_player() then
-
-			if mobs.invis[ objs[n]:get_player_name() ] then
-
+			privs = minetest.get_privs(get_player_name())
+			if mobs.invis[ objs[n]:get_player_name() ] or privs.invincible or not privs.interact then
 				type = ""
 			else
 				player = objs[n]

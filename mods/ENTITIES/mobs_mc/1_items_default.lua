@@ -534,8 +534,17 @@ if c("totem") then
 		hud_totem[player:get_player_name()] = nil
 	end)
 
+	minetest.register_privilege("invincible", {
+		description = S("Prevent damage from any source"),
+		give_to_singleplayer = false
+	})
+
 	-- Save the player from death when holding totem of undying in hand
 	minetest.register_on_player_hpchange(function(player, hp_change)
+		privs = minetest.get_player_privs(player:get_player_name())
+		if privs.invincible or not privs.interact then
+			return 0
+		end
 		local hp = player:get_hp()
 		-- Fatal damage?
 		if hp + hp_change <= 0 then
