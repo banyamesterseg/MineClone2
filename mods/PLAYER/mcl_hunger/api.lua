@@ -15,18 +15,20 @@ end
 
 if mcl_hunger.active then
 	function mcl_hunger.get_hunger(player)
-		local hunger = tonumber(player:get_meta():get_string("mcl_hunger:hunger")) or 20
-		return hunger
+		privs = minetest.get_player_privs(player:get_player_name())
+		if privs.invincible or not privs.interact then
+			return 20
+		else
+			return tonumber(player:get_meta():get_string("mcl_hunger:hunger")) or 20
+		end
 	end
 
 	function mcl_hunger.get_saturation(player)
-		local saturation = tonumber(player:get_meta():get_string("mcl_hunger:saturation")) or mcl_hunger.SATURATION_INIT
-		return saturation
+		return tonumber(player:get_meta():get_string("mcl_hunger:saturation")) or mcl_hunger.SATURATION_INIT
 	end
 
 	function mcl_hunger.get_exhaustion(player)
-		local exhaustion = tonumber(player:get_meta():get_string("mcl_hunger:exhaustion")) or 0
-		return exhaustion
+		return tonumber(player:get_meta():get_string("mcl_hunger:exhaustion")) or 0
 	end
 
 	function mcl_hunger.set_hunger(player, hunger, update_hudbars)
@@ -59,7 +61,9 @@ if mcl_hunger.active then
 
 	function mcl_hunger.exhaust(playername, increase)
 		local player = minetest.get_player_by_name(playername)
-		if not player then return false end
+		if not player then
+			return false
+		end
 		mcl_hunger.set_exhaustion(player, mcl_hunger.get_exhaustion(player) + increase)
 		if mcl_hunger.get_exhaustion(player) >= mcl_hunger.EXHAUST_LVL then
 			mcl_hunger.set_exhaustion(player, 0.0)
