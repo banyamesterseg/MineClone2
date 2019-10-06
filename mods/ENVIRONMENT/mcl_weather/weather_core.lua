@@ -24,6 +24,8 @@ mcl_weather.reg_weathers = {}
 -- global flag to disable/enable ABM logic. 
 mcl_weather.allow_abm = true
 
+mcl_weather.cloudCeil = minetest.settings:get("mcl_cloudCeiling") or 127
+
 mcl_weather.reg_weathers["none"] = {
 	min_duration = mcl_weather.min_duration,
 	max_duration = mcl_weather.max_duration,
@@ -68,7 +70,7 @@ end
 mcl_weather.is_outdoor = function(pos)
 	local cpos = {x=pos.x, y=pos.y+1, z=pos.z}
 	local dim = mcl_worlds.pos_to_dimension(cpos)
-	if dim == "overworld" and pos.y < 130 --[[TODO un-hardcode]] and minetest.get_node_light(cpos, 0.5) == 15 then
+	if dim == "overworld" and pos.y < mcl_weather.cloudCeil+4 --[[cloud thickness is still hardcoded]] and minetest.get_node_light(cpos, 0.5) == 15 then
 		return true
 	end
 	return false

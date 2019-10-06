@@ -17,12 +17,16 @@ creative_mode (Creative mode) bool false
 # setting is disabled, but they still deal damage to creatures.
 enable_fire (Destructive and spreading fire) bool true
 
-# If enabled, the weather will change naturally over time.
-mcl_doWeatherCycle (Change weather) bool true
-
 # If enabled, breaking blocks will cause them to drop as item.
 # Note that blocks never have drops when in Creative Mode.
 mcl_doTileDrops (Blocks have drops) bool true
+
+[Weather]
+# Set the height at which the cloud layer is found.
+mcl_cloudCeiling (Cloud ceiling height) int 127
+
+# If enabled, the weather will change naturally over time.
+mcl_doWeatherCycle (Change weather) bool true
 
 [Players]
 # If enabled, players respawn at the bed they last lay on instead of normal
