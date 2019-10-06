@@ -541,7 +541,7 @@ if c("totem") then
 
 	-- Save the player from death when holding totem of undying in hand
 	minetest.register_on_player_hpchange(function(player, hp_change)
-		privs = minetest.get_player_privs(player:get_player_name())
+		local privs = minetest.get_player_privs(player:get_player_name())
 		if privs.invincible or not privs.interact then
 			return 0
 		end

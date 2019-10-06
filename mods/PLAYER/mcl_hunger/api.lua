@@ -15,7 +15,7 @@ end
 
 if mcl_hunger.active then
 	function mcl_hunger.get_hunger(player)
-		privs = minetest.get_player_privs(player:get_player_name())
+		local privs = minetest.get_player_privs(player:get_player_name())
 		if privs.invincible or not privs.interact then
 			return 20
 		else
