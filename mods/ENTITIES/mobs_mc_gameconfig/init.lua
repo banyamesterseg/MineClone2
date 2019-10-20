@@ -136,6 +136,7 @@ mobs_mc.override.follow = {
 	sheep = { mobs_mc.override.items.wheat },
 	cow = { mobs_mc.override.items.wheat },
 	horse = { mobs_mc.override.items.apple, mobs_mc.override.items.sugar, mobs_mc.override.items.wheat, mobs_mc.override.items.hay_bale, mobs_mc.override.items.golden_apple, mobs_mc.override.items.golden_carrot },
+	llama = { mobs_mc.override.items.hay_bale },
 	rabbit = { mobs_mc.override.items.dandelion, mobs_mc.override.items.carrot, mobs_mc.override.items.golden_carrot },
 }
 
