@@ -130,7 +130,7 @@ minetest.register_craftitem("mcl_farming:bread", {
 	on_secondary_use = minetest.item_eat(5),
 })
 
-minetest.register_node("mcl_farming:hay_block", {
+minetest.register_node("mcl_farming:hay_bale", {
 	description = S("Hay Bale"),
 	_doc_items_longdesc = S("Hay bales are decorative blocks made from wheat."),
 	tiles = {"mcl_farming_hayblock_top.png", "mcl_farming_hayblock_top.png", "mcl_farming_hayblock_side.png"},
@@ -146,7 +146,7 @@ minetest.register_node("mcl_farming:hay_block", {
 })
 
 minetest.register_craft({
-	output = 'mcl_farming:hay_block',
+	output = 'mcl_farming:hay_bale',
 	recipe = {
 		{'mcl_farming:wheat_item', 'mcl_farming:wheat_item', 'mcl_farming:wheat_item'},
 		{'mcl_farming:wheat_item', 'mcl_farming:wheat_item', 'mcl_farming:wheat_item'},
@@ -157,7 +157,7 @@ minetest.register_craft({
 minetest.register_craft({
 	output = 'mcl_farming:wheat_item 9',
 	recipe = {
-		{'mcl_farming:hay_block'},
+		{'mcl_farming:hay_bale'},
 	}
 })
 
