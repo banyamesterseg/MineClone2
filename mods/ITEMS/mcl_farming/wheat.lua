@@ -145,6 +145,8 @@ minetest.register_node("mcl_farming:hay_bale", {
 	_mcl_hardness = 0.5,
 })
 
+minetest.register_alias("mcl_farming:hay_block", "mcl_farming:hay_bale")
+
 minetest.register_craft({
 	output = 'mcl_farming:hay_bale',
 	recipe = {
