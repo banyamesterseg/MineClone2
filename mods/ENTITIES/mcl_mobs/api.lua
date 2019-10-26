@@ -375,20 +375,28 @@ end
 
 
 -- custom particle effects
-local effect = function(pos, amount, texture, min_size, max_size, radius, gravity, glow)
+local effect = function(pos, amount, texture, min_size, max_size, radius, gravity, glow, go_down)
 
 	radius = radius or 2
 	min_size = min_size or 0.5
 	max_size = max_size or 1
 	gravity = gravity or -10
 	glow = glow or 0
+	go_down = go_down or false
+
+	local ym
+	if go_down then
+		ym = 0
+	else
+		ym = -radius
+	end
 
 	minetest.add_particlespawner({
 		amount = amount,
 		time = 0.25,
 		minpos = pos,
 		maxpos = pos,
-		minvel = {x = -radius, y = -radius, z = -radius},
+		minvel = {x = -radius, y = ym, z = -radius},
 		maxvel = {x = radius, y = radius, z = radius},
 		minacc = {x = 0, y = gravity, z = 0},
 		maxacc = {x = 0, y = gravity, z = 0},
@@ -401,6 +409,29 @@ local effect = function(pos, amount, texture, min_size, max_size, radius, gravit
 	})
 end
 
+local damage_effect = function(self, damage)
+	-- damage particles
+	if (not disable_blood) and damage > 0 then
+
+		local amount_large = math.floor(damage / 2)
+		local amount_small = damage % 2
+
+		local pos = self.object:get_pos()
+
+		pos.y = pos.y + (self.collisionbox[5] - self.collisionbox[2]) * .5
+
+		local texture = "mobs_blood.png"
+		-- full heart damage (one particle for each 2 HP damage)
+		if amount_large > 0 then
+			effect(pos, amount_large, texture, 2, 2, 1.75, 0, nil, true)
+		end
+		-- half heart damage (one additional particle if damage is an odd number)
+		if amount_small > 0 then
+			-- TODO: Use "half heart"
+			effect(pos, amount_small, texture, 1, 1, 1.75, 0, nil, true)
+		end
+	end
+end
 
 local update_tag = function(self)
 	self.object:set_properties({
@@ -712,7 +743,7 @@ local do_env_damage = function(self)
 
 	pos.y = pos.y + 1 -- for particle effect position
 
-	-- water
+	-- water damage
 	if self.water_damage
 	and nodef.groups.water then
 
@@ -720,17 +751,15 @@ local do_env_damage = function(self)
 
 			self.health = self.health - self.water_damage
 
-			effect(pos, 5, "bubble.png", nil, nil, 1, nil)
+			effect(pos, 5, "tnt_smoke.png", nil, nil, 1, nil)
 
 			if check_for_death(self, "water", {type = "environment",
 					pos = pos, node = self.standing_in}) then return end
 		end
 
-	-- lava or fire
+	-- lava damage
 	elseif self.lava_damage
-	and (nodef.groups.lava
-	or self.standing_in == node_fire
-	or self.standing_in == node_permanent_flame) then
+	and (nodef.groups.lava) then
 
 		if self.lava_damage ~= 0 then
 
@@ -739,6 +768,20 @@ local do_env_damage = function(self)
 			effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
 
 			if check_for_death(self, "lava", {type = "environment",
+					pos = pos, node = self.standing_in}) then return end
+		end
+
+	-- fire damage
+	elseif self.fire_damage
+	and (nodef.groups.fire) then
+
+		if self.fire_damage ~= 0 then
+
+			self.health = self.health - self.fire_damage
+
+			effect(pos, 5, "fire_basic_flame.png", nil, nil, 1, nil)
+
+			if check_for_death(self, "fire", {type = "environment",
 					pos = pos, node = self.standing_in}) then return end
 		end
 
@@ -751,6 +794,38 @@ local do_env_damage = function(self)
 
 		if check_for_death(self, "dps", {type = "environment",
 				pos = pos, node = self.standing_in}) then return end
+	end
+
+	-- Drowning damage
+	if self.breath_max ~= -1 then
+		local drowning = false
+		if self.breathes_in_water then
+			if minetest.get_item_group(self.standing_in, "water") == 0 then
+				drowning = true
+			end
+		elseif nodef.drowning > 0 then
+			drowning = true
+		end
+		if drowning then
+
+			self.breath = math.max(0, self.breath - 1)
+
+			effect(pos, 2, "bubble.png", nil, nil, 1, nil)
+			if self.breath <= 0 then
+				local dmg
+				if nodef.drowning > 0 then
+					dmg = nodef.drowning
+				else
+					dmg = 4
+				end
+				damage_effect(self, dmg)
+				self.health = self.health - dmg
+			end
+			if check_for_death(self, "drowning", {type = "environment",
+					pos = pos, node = self.standing_in}) then return end
+		else
+			self.breath = math.min(self.breath_max, self.breath + 1)
+		end
 	end
 
 	--- suffocation inside solid node
@@ -2495,24 +2570,7 @@ local mob_punch = function(self, hitter, tflp, tool_capabilities, dir)
 			})
 		end
 
-		-- blood_particles
-		if self.blood_amount > 0
-		and not disable_blood then
-
-			local pos = self.object:get_pos()
-
-			pos.y = pos.y + (-self.collisionbox[2] + self.collisionbox[5]) * .5
-
-			-- do we have a single blood texture or multiple?
-			if type(self.blood_texture) == "table" then
-
-				local blood = self.blood_texture[random(1, #self.blood_texture)]
-
-				effect(pos, self.blood_amount, blood, nil, nil, 1, nil)
-			else
-				effect(pos, self.blood_amount, self.blood_texture, nil, nil, 1, nil)
-			end
-		end
+		damage_effect(self, damage)
 
 		-- do damage
 		self.health = self.health - floor(damage)
@@ -2773,6 +2831,9 @@ local mob_activate = function(self, staticdata, def, dtime)
 
 	if self.health == 0 then
 		self.health = random (self.hp_min, self.hp_max)
+	end
+	if self.breath == nil then
+		self.breath = self.breath_max
 	end
 
 	-- pathfinding init
@@ -3050,6 +3111,15 @@ if def.can_despawn ~= nil then
 else
 	can_despawn = true
 end
+
+local function scale_difficulty(value, default, min, special)
+	if (not value) or (value == default) or (value == special) then
+		return default
+	else
+		return max(min, value * difficulty)
+	end
+end
+
 minetest.register_entity(name, {
 
 	stepheight = def.stepheight or 1.1, -- was 0.6
@@ -3067,8 +3137,10 @@ minetest.register_entity(name, {
 	drawtype = def.drawtype, -- DEPRECATED, use rotate instead
 	rotate = math.rad(def.rotate or 0), --  0=front, 90=side, 180=back, 270=side2
 	lifetimer = def.lifetimer or 57.73,
-	hp_min = max(1, (def.hp_min or 5) * difficulty),
-	hp_max = max(1, (def.hp_max or 10) * difficulty),
+	hp_min = scale_difficulty(def.hp_min, 5, 1),
+	hp_max = scale_difficulty(def.hp_max, 10, 1),
+	breath_max = def.breath_max or 15,
+        breathes_in_water = def.breathes_in_water or false,
 	physical = true,
 	collisionbox = def.collisionbox or {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25},
 	selectionbox = def.selectionbox or def.collisionbox,
@@ -3079,11 +3151,12 @@ minetest.register_entity(name, {
 	view_range = def.view_range or 16,
 	walk_velocity = def.walk_velocity or 1,
 	run_velocity = def.run_velocity or 2,
-	damage = max(0, (def.damage or 0) * difficulty),
+	damage = scale_difficulty(def.damage, 0, 0),
 	light_damage = def.light_damage or 0,
 	sunlight_damage = def.sunlight_damage or 0,
 	water_damage = def.water_damage or 0,
-	lava_damage = def.lava_damage or 0,
+	lava_damage = def.lava_damage or 8,
+	fire_damage = def.fire_damage or 1,
 	suffocation = def.suffocation or true,
 	fall_damage = def.fall_damage or 1,
 	fall_speed = def.fall_speed or -10, -- must be lower than -2 (default: -10)
@@ -3101,8 +3174,6 @@ minetest.register_entity(name, {
 	group_attack = def.group_attack or false,
 	passive = def.passive or false,
 	knock_back = def.knock_back ~= false,
-	blood_amount = def.blood_amount or 5,
-	blood_texture = def.blood_texture or "mobs_blood.png",
 	shoot_offset = def.shoot_offset or 0,
 	floats = def.floats or 1, -- floats in water by default
 	replace_rate = def.replace_rate,

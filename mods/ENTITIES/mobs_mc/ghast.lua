@@ -53,8 +53,6 @@ mobs:register_mob("mobs_mc:ghast", {
 		walk_start = 0,		walk_end = 40,
 		run_start = 0,		run_end = 40,
 	},
-	lava_damage = 4,
-	light_damage = 0,
 	fall_damage = 0,
 	view_range = 100,
 	--attack_type = "dogshoot",
@@ -73,7 +71,6 @@ mobs:register_mob("mobs_mc:ghast", {
 	fly = true,
 	fly_in = {"air"},
 	jump_chance = 98,
-	blood_amount = 0,
 })
 
 

@@ -28,8 +28,13 @@ functions needed for the mob to work properly which contains the following:
       "monster"    attacks player or npc on sight.
       "npc"        walk around and will defend themselves if hit first, they
                    kill monsters.
-   'hp_min'        has the minimum health value the mob can spawn with.
-   'hp_max'        has the maximum health value the mob can spawn with.
+   'hp_min'        the minimum health value the mob can spawn with.
+   'hp_max'        the maximum health value the mob can spawn with.
+   'breath_max'    The maximum breath value the mob can spawn with and can have.
+                   If -1 (default), mob does not take drowning damage.
+   'breathes_in_water' If true, mob loses breath when not in water. Otherwise,
+                   mob loses breath when inside a node with `drowning` attribute
+                   set (default: false).
    'armor'         holds strength of mob, 100 is normal, lower is more powerful
                    and needs more hits and better weapons to kill.
    'passive'       when true allows animals to defend themselves when hit,
@@ -56,9 +61,11 @@ functions needed for the mob to work properly which contains the following:
    'fall_speed'    has the maximum speed the mob can fall at, default is -10.
    'fall_damage'   when true causes falling to inflict damage.
    'water_damage'  holds the damage per second infliced to mobs when standing in
-                   water.
+                   water (default: 0).
    'lava_damage'   holds the damage per second inflicted to mobs when standing
-                   in lava or fire.
+                   in lava (default: 8).
+   'fire_damage'   holds the damage per second inflicted to mobs when standing
+                   in fire (default: 1).
    'light_damage'  holds the damage per second inflicted to mobs when it's too
                    bright (above 13 light).
    'suffocation'   when true causes mobs to suffocate inside solid blocks (2 damage per second).
@@ -116,10 +123,6 @@ functions needed for the mob to work properly which contains the following:
                          e.g. {"player", "mobs_animal:chicken"}.
    'runaway_from'        contains a table with mob names to run away from, add
                          "player" to list to runaway from player also.
-   'blood_amount'        contains the number of blood droplets to appear when
-                         mob is hit.
-   'blood_texture'       has the texture name to use for droplets e.g.
-                         "mobs_blood.png", or table {"blood1.png", "blood2.png"}
    'pathfinding'         set to 1 for mobs to use pathfinder feature to locate
                          player, set to 2 so they can build/break also (only
                          works with dogfight attack and when 'mobs_griefing'
@@ -299,6 +302,10 @@ for each mob.
 
    'self.health'        contains current health of mob (cannot exceed
                         self.hp_max)
+   'self.breath'        contains current breath of mob, if mob takes drowning
+                        damage at all (cannot exceed self.breath_max). Breath
+                        decreases by 1 each second while in a node with drowning
+                        damage and increases by 1 each second otherwise.
    'self.texture_list'  contains list of all mob textures
    'self.child_texture' contains mob child texture when growing up
    'self.base_texture'  contains current skin texture which was randomly
@@ -585,19 +592,13 @@ External Settings for "minetest.conf"
    'enable_damage'          if true monsters will attack players (default is true)
    'only_peaceful_mobs'     if true only animals will spawn in game (default is
                             false)
-   'mobs_disable_blood'     if false blood effects appear when mob is hit (default
+   'mobs_disable_blood'     if false, damage effects appear when mob is hit (default
                             is false)
    'mobs_spawn_protected'   if set to false then mobs will not spawn in protected
                             areas (default is true)
-   'remove_far_mobs'        if true then untamed mobs that are outside players
-                             visual range will be removed (default is true)
-   'mobname'                can change specific mob chance rate (0 to disable) and
-                            spawn number e.g. mobs_animal:cow = 1000,5
    'mob_difficulty'         sets difficulty level (health and hit damage
                             multiplied by this number), defaults to 1.0.
-   'mob_show_health'        if false then punching mob will not show health status
-                            (true by default)
-   'mob_chance_multiplier'  multiplies chance of all mobs spawning and can be set
+   'mob_spawn_chance'       multiplies chance of all mobs spawning and can be set
                             to 0.5 to have mobs spawn more or 2.0 to spawn less.
                             e.g.  1 in 7000 * 0.5 = 1 in 3500 so better odds of
                             spawning.

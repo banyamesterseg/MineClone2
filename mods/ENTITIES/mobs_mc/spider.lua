@@ -46,9 +46,6 @@ local spider = {
 		{name = mobs_mc.items.spider_eye, chance = 3, min = 1, max = 1,},
 	},
 	specific_attack = { "player", "mobs_mc:iron_golem" },
-	water_damage = 0,
-	lava_damage = 4,
-	light_damage = 0,
 	fear_height = 4,
 	animation = {
 		stand_speed = 10,
@@ -61,7 +58,6 @@ local spider = {
 		run_start = 0,
 		run_end = 20,
 	},
-	blood_amount = 0,
 }
 mobs:register_mob("mobs_mc:spider", spider)
 

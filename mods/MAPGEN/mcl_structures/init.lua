@@ -44,7 +44,7 @@ mcl_structures.call_struct = function(pos, struct_style, rotation)
 	elseif struct_style == "desert_well" then
 		return mcl_structures.generate_desert_well(pos, rotation)
 	elseif struct_style == "igloo" then
-		return mcl_structures.generate_igloo_top(pos, rotation)
+		return mcl_structures.generate_igloo(pos, rotation)
 	elseif struct_style == "witch_hut" then
 		return mcl_structures.generate_witch_hut(pos, rotation)
 	elseif struct_style == "ice_spike_small" then
@@ -77,17 +77,25 @@ mcl_structures.generate_desert_well = function(pos)
 end
 
 mcl_structures.generate_igloo = function(pos)
-	-- TODO: Check if we're allowed to destroy nodes
-	-- FIXME: Some nodes (water, ice) don't get overwritten by ladder
-	-- FIXME: Nodes at Y=0 don't get overwritten by ladder
-	-- FIXME: Apply basement height limit in other dimensions
-	-- TODO: Check if basement generation would not be too obvious
-	-- TODO: Generate basement with 50% chance only
+	-- Place igloo
 	local success, rotation = mcl_structures.generate_igloo_top(pos)
-	if success then
-		local buffer = pos.y - (mcl_vars.mg_lava_overworld_max + 10)
+	-- Place igloo basement with 50% chance
+	local r = math.random(1,2)
+	if success and r == 1 then
+		-- Select basement depth
+		local dim = mcl_worlds.pos_to_dimension(pos)
+		buffer = pos.y - (mcl_vars.mg_lava_overworld_max + 10)
+		if dim == "nether" then
+			buffer = pos.y - (mcl_vars.mg_lava_nether_max + 10)
+		elseif dim == "end" then
+			buffer = pos.y - (mcl_vars.mg_end_min + 1)
+		elseif dim == "overworld" then
+			buffer = pos.y - (mcl_vars.mg_lava_overworld_max + 10)
+		else
+			return success
+		end
 		if buffer <= 19 then
-			return
+			return success
 		end
 		local depth = math.random(19, buffer)
 		local bpos = {x=pos.x, y=pos.y-depth, z=pos.z}
@@ -113,8 +121,6 @@ mcl_structures.generate_igloo = function(pos)
 		else
 			return success
 		end
-		-- TODO: more reliable param2
-		minetest.set_node(tpos, {name="mcl_doors:trapdoor", param2=20+minetest.dir_to_facedir(dir)})
 		local set_brick = function(pos)
 			local c = math.random(1, 3) -- cracked chance
 			local m = math.random(1, 10) -- chance for monster egg
@@ -135,13 +141,31 @@ mcl_structures.generate_igloo = function(pos)
 			minetest.set_node(pos, {name=brick})
 		end
 		local ladder_param2 = minetest.dir_to_wallmounted(tdir)
+		local real_depth = 0
+		-- Check how deep we can actuall dig
 		for y=1, depth-5 do
+			real_depth = real_depth + 1
+			local node = minetest.get_node({x=tpos.x,y=tpos.y-y,z=tpos.z})
+			local def = minetest.registered_nodes[node.name]
+			if (not def) or (not def.walkable) or (def.liquidtype ~= "none") or (not def.is_ground_content) then
+				bpos.y = tpos.y-y+1
+				break
+			end
+		end
+		if real_depth <= 6 then
+			return success
+		end
+		-- Place hidden trapdoor
+		minetest.set_node(tpos, {name="mcl_doors:trapdoor", param2=20+minetest.dir_to_facedir(dir)}) -- TODO: more reliable param2
+		-- Generate ladder to basement
+		for y=1, real_depth-1 do
 			set_brick({x=tpos.x-1,y=tpos.y-y,z=tpos.z  })
 			set_brick({x=tpos.x+1,y=tpos.y-y,z=tpos.z  })
 			set_brick({x=tpos.x  ,y=tpos.y-y,z=tpos.z-1})
 			set_brick({x=tpos.x  ,y=tpos.y-y,z=tpos.z+1})
 			minetest.set_node({x=tpos.x,y=tpos.y-y,z=tpos.z}, {name="mcl_core:ladder", param2=ladder_param2})
 		end
+		-- Place basement
 		mcl_structures.generate_igloo_basement(bpos, rotation)
 	end
 	return success
@@ -463,10 +487,11 @@ minetest.register_chatcommand("spawnstruct", {
 	description = S("Generate a pre-defined structure near your position."),
 	privs = {debug = true},
 	func = function(name, param)
-		local pos= minetest.get_player_by_name(name):get_pos()
+		local pos = minetest.get_player_by_name(name):get_pos()
 		if not pos then
 			return
 		end
+		pos = vector.round(pos)
 		local errord = false
 		local message = S("Structure placed.")
 		if param == "village" then
@@ -477,7 +502,7 @@ minetest.register_chatcommand("spawnstruct", {
 		elseif param == "desert_well" then
 			mcl_structures.generate_desert_well(pos)
 		elseif param == "igloo" then
-			mcl_structures.generate_igloo_top(pos)
+			mcl_structures.generate_igloo(pos)
 		elseif param == "witch_hut" then
 			mcl_structures.generate_witch_hut(pos)
 		elseif param == "boulder" then

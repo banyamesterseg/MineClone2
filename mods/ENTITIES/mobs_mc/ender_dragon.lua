@@ -47,9 +47,8 @@ mobs:register_mob("mobs_mc:enderdragon", {
 		min = 1,
 		max = 1},
 	},
-	water_damage = 0,
 	lava_damage = 0,
-	light_damage = 0,
+	fire_damage = 0,
 	on_rightclick = nil,
 	attack_type = "dogshoot",
 	arrow = "mobs_mc:fireball2",
@@ -61,7 +60,6 @@ mobs:register_mob("mobs_mc:enderdragon", {
 		walk_start = 0,		walk_end = 20,
 		run_start = 0,		run_end = 20,
 	},
-	blood_amount = 0,
 
 	ignores_nametag = true,
 })

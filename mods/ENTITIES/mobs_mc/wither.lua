@@ -41,16 +41,14 @@ mobs:register_mob("mobs_mc:wither", {
 	dogshoot_switch = 1,
 	dogshoot_count_max =1,
 	attack_animals = true,
-	floats=1,
 	drops = {
 		{name = mobs_mc.items.nether_star,
 		chance = 1,
 		min = 1,
 		max = 1},
 	},
-	water_damage = 0,
 	lava_damage = 0,
-	light_damage = 0,
+	fire_damage = 0,
 	attack_type = "dogshoot",
 	explosion_radius = 3,
 	explosion_fire = false,
@@ -65,7 +63,6 @@ mobs:register_mob("mobs_mc:wither", {
 		walk_start = 0,		walk_end = 20,
 		run_start = 0,		run_end = 20,
 	},
-	blood_amount = 0,
 })
 
 local mobs_griefing = minetest.settings:get_bool("mobs_griefing") ~= false

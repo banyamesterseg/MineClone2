@@ -29,9 +29,6 @@ mobs:register_mob("mobs_mc:silverfish", {
 	walk_velocity = 0.6,
 	run_velocity = 2,
 	jump = true,
-	water_damage = 1,
-	lava_damage = 4,
-	light_damage = 0,
 	fear_height = 4,
 	replace_what = mobs_mc.replace.silverfish,
 	replace_rate = 2,
@@ -45,7 +42,6 @@ mobs:register_mob("mobs_mc:silverfish", {
 	attack_type = "dogfight",
 	damage = 1,
 	reach = 1,
-	blood_amount = 0,
 })
 
 mobs:register_egg("mobs_mc:silverfish", S("Silverfish"), "mobs_mc_spawn_icon_silverfish.png", 0)
