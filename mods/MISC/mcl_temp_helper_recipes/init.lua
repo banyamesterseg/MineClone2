@@ -11,9 +11,9 @@ minetest.register_craft({
 minetest.register_craft({
 	output = "mcl_sponges:sponge",
 	recipe = {
-		{ "mcl_farming:hay_bale", "mcl_farming:hay_bale", "mcl_farming:hay_bale" },
-		{ "mcl_farming:hay_bale", "mcl_core:goldblock", "mcl_farming:hay_bale" },
-		{ "mcl_farming:hay_bale", "mcl_farming:hay_bale", "mcl_farming:hay_bale" },
+		{ "mcl_farming:hay_block", "mcl_farming:hay_block", "mcl_farming:hay_block" },
+		{ "mcl_farming:hay_block", "mcl_core:goldblock", "mcl_farming:hay_block" },
+		{ "mcl_farming:hay_block", "mcl_farming:hay_block", "mcl_farming:hay_block" },
 	}
 })
 
