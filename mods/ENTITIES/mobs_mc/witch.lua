@@ -31,7 +31,7 @@ mobs:register_mob("mobs_mc:witch", {
 	pathfinding = 1,
 	group_attack = true,
 	attack_type = "dogshoot",
-	arrow = "mobs:potion_arrow",
+	arrow = "mobs_mc:potion_arrow",
 	shoot_interval = 2.5,
 	shoot_offset = 1,
 	dogshoot_switch = 1,
@@ -68,8 +68,8 @@ mobs:register_mob("mobs_mc:witch", {
 
 })
 
--- fireball (weapon)
-mobs:register_arrow(":mobs:potion_arrow", {
+-- potion projectile (EXPERIMENTAL)
+mobs:register_arrow("mobs_mc:potion_arrow", {
 	visual = "sprite",
 	visual_size = {x = 0.5, y = 0.5},
 	--textures = {"vessels_glass_bottle.png"},  --TODO fix to else if default
@@ -101,7 +101,7 @@ mobs:register_arrow(":mobs:potion_arrow", {
 --mobs:spawn_specific("mobs_mc:witch", mobs_mc.spawn.jungle, {"air"}, 0, minetest.LIGHT_MAX-6, 12, 20000, 2, mobs_mc.spawn_height.water-6, mobs_mc.spawn_height.overworld_max)
 
 -- spawn eggs
-mobs:register_egg("mobs_mc:witch", S("Witch"), "mobs_mc_spawn_icon_witch.png", 0)
+mobs:register_egg("mobs_mc:witch", S("Witch"), "mobs_mc_spawn_icon_witch.png", 0, true)
 
 if minetest.settings:get_bool("log_mods") then
 	minetest.log("action", "MC mobs loaded")

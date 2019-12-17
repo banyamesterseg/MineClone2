@@ -24,9 +24,21 @@ local function round(num, idp)
 	return math.floor(num * mult + 0.5) / mult
 end
 
+-- This is a list of nodes that SHOULD NOT call their detach function
+local no_detach = {}
+
 -- This detaches all chorus plants that are/were attached
 -- at start_pos.
 mcl_end.detach_chorus_plant = function(start_pos, digger)
+	-- This node should not call a detach function, do NOTHING
+	local hash = minetest.hash_node_position(start_pos)
+	if no_detach[hash] ~= nil then
+		return
+	end
+
+	-- This node SHOULD be detached, make sure no others are
+	no_detach = {}
+
 	local neighbors = {
 		{ x=0, y=1, z=0 },
 		{ x=0, y=0, z=1 },
@@ -52,37 +64,54 @@ mcl_end.detach_chorus_plant = function(start_pos, digger)
 		local break_tree = true
 		while #check_posses > 0 do
 			local pos = check_posses[1]
-			local node = minetest.get_node(pos)
-			touched_nodes_hashes[minetest.hash_node_position(pos)] = true
-			if node.name == "mcl_end:end_stone" then
-				-- End stone found, the algorithm ends here (haha!)
-				-- without destroying any nodes, because chorus plants
-				-- attach to end stone.
-				break_tree = false
-				break
-			elseif minetest.get_item_group(node.name, "chorus_plant") == 1 then
-				table.insert(chorus_nodes, pos)
-				for i=1, #neighbors do
-					local newpos = vector.add(pos, neighbors[i])
-					if not touched_nodes_hashes[minetest.hash_node_position(newpos)] then
-						table.insert(check_posses, vector.add(pos, neighbors[i]))
+
+			-- Don't just count neighbors as being touched, count THIS NODE as well
+			-- This will prevent it from getting stuck in an endless loop
+			if not touched_nodes_hashes[minetest.hash_node_position(pos)] then
+				local node = minetest.get_node(pos)
+				touched_nodes_hashes[minetest.hash_node_position(pos)] = true
+				if node.name == "mcl_end:end_stone" then
+					-- End stone found, the algorithm ends here (haha!)
+					-- without destroying any nodes, because chorus plants
+					-- attach to end stone.
+					break_tree = false
+					break
+				elseif minetest.get_item_group(node.name, "chorus_plant") == 1 then
+					table.insert(chorus_nodes, pos)
+					for i=1, #neighbors do
+						local newpos = vector.add(pos, neighbors[i])
+						if not touched_nodes_hashes[minetest.hash_node_position(newpos)] then
+							table.insert(check_posses, vector.add(pos, neighbors[i]))
+						end
 					end
 				end
 			end
+
 			table.remove(check_posses, 1)
 		end
 		if break_tree then
 			-- If we traversed the entire chorus plant and it was not attached to end stone:
 			-- Drop ALL the chorus nodes we found.
 			for c=1, #chorus_nodes do
-				minetest.node_dig(chorus_nodes[c], { name = "mcl_end:chorus_plant" }, digger)
+				no_detach[ minetest.hash_node_position(chorus_nodes[c]) ] = true
+				if digger then
+					minetest.node_dig(chorus_nodes[c], { name = "mcl_end:chorus_plant" }, digger)
+				else
+					minetest.remove_node(chorus_nodes[c])
+				end
 			end
 		end
 	end
+
+	no_detach = {}
 end
 
 mcl_end.check_detach_chorus_plant = function(pos, oldnode, oldmetadata, digger)
 	mcl_end.detach_chorus_plant(pos, digger)
+end
+
+mcl_end.check_blast_chorus_plant = function(pos)
+	mcl_end.detach_chorus_plant(pos)
 end
 
 minetest.register_node("mcl_end:chorus_flower", {
@@ -169,6 +198,7 @@ minetest.register_node("mcl_end:chorus_flower", {
 		end
 	end,
 	after_dig_node = mcl_end.check_detach_chorus_plant,
+	on_blast = mcl_end.check_blast_chorus_plant,
 	_mcl_blast_resistance = 2,
 	_mcl_hardness = 0.4,
 })
@@ -193,6 +223,7 @@ minetest.register_node("mcl_end:chorus_flower_dead", {
 	drop = "mcl_end:chorus_flower",
 	groups = {handy=1,axey=1, deco_block = 1, dig_by_piston = 1, destroy_by_lava_flow = 1,chorus_plant = 1},
 	after_dig_node = mcl_end.check_detach_chorus_plant,
+	on_blast = mcl_end.check_blast_chorus_plant,
 	_mcl_blast_resistance = 2,
 	_mcl_hardness = 0.4,
 })
@@ -270,6 +301,7 @@ minetest.register_node("mcl_end:chorus_plant", {
 		end
 	end,
 	after_dig_node = mcl_end.check_detach_chorus_plant,
+	on_blast = mcl_end.check_blast_chorus_plant,
 	_mcl_blast_resistance = 2,
 	_mcl_hardness = 0.4,
 })
@@ -501,7 +533,7 @@ local eat_chorus_fruit = function(itemstack, player, pointed_thing)
 		end
 	end
 	local count = itemstack:get_count()
-	local new_itemstack = minetest.do_item_eat(0, nil, itemstack, player, pointed_thing)
+	local new_itemstack = minetest.do_item_eat(4, nil, itemstack, player, pointed_thing)
 	local new_count = new_itemstack:get_count()
 	if count ~= new_count or new_itemstack:get_name() ~= "mcl_end:chorus_fruit" or (minetest.settings:get_bool("creative_mode") == true) then
 		random_teleport(player)

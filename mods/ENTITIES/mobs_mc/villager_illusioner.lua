@@ -4,13 +4,21 @@
 --License for code WTFPL and otherwise stated in readmes
 
 local S = minetest.get_translator("mobs_mc")
+local mod_bows = minetest.get_modpath("mcl_bows") ~= nil
 
 mobs:register_mob("mobs_mc:illusioner", {
 	type = "monster",
 	attack_type = "shoot",
-	shoot_interval = 0.5,
-	arrow = "mobs_mc:arrow_entity",
+	shoot_interval = 2.5,
 	shoot_offset = 1.5,
+	arrow = "mcl_bows:arrow_entity",
+	shoot_arrow = function(self, pos, dir)
+		if mod_bows then
+			-- 1-4 damage per arrow
+			local dmg = math.random(1, 4)
+			mcl_bows.shoot_arrow("mcl_bows:arrow", pos, dir, self.object:get_yaw(), self.object, nil, dmg)
+		end
+	end,
 	hp_min = 32,
 	hp_max = 32,
 	collisionbox = {-0.3, -0.01, -0.3, 0.3, 1.94, 0.3},
@@ -23,7 +31,6 @@ mobs:register_mob("mobs_mc:illusioner", {
 	}, },
 	sounds = {
 		-- TODO: more sounds
-		shoot_attack = "mcl_bows_bow_shoot",
 		distance = 16,
 	},
 	visual_size = {x=3, y=3},

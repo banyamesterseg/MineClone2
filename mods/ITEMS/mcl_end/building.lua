@@ -1,6 +1,12 @@
 -- Building blocks and decorative nodes
 local S = minetest.get_translator("mcl_end")
 
+local mod_screwdriver = minetest.get_modpath("screwdriver") ~= nil
+local on_rotate
+if mod_screwdriver then
+	on_rotate = screwdriver.rotate_3way
+end
+
 minetest.register_node("mcl_end:end_stone", {
 	description = S("End Stone"),
 	_doc_items_longdesc = doc.sub.items.temp.build,
@@ -47,6 +53,7 @@ minetest.register_node("mcl_end:purpur_pillar", {
 	tiles = {"mcl_end_purpur_pillar_top.png", "mcl_end_purpur_pillar_top.png", "mcl_end_purpur_pillar.png"},
 	groups = {pickaxey=1, building_block=1, material_stone=1, purpur_block=1},
 	sounds = mcl_sounds.node_sound_stone_defaults(),
+	on_rotate = on_rotate,
 	_mcl_blast_resistance = 30,
 	_mcl_hardness = 1.5,
 })
@@ -66,9 +73,9 @@ minetest.register_node("mcl_end:end_rod", {
 	is_ground_content = false,
 	paramtype = "light",
 	paramtype2 = "facedir",
-	light_source = 14,
+	light_source = minetest.LIGHT_MAX,
 	sunlight_propagates = true,
-	groups = { dig_immediate=3, deco_block=1, destroy_by_lava_flow=1, },
+	groups = { dig_immediate=3, deco_block=1, destroy_by_lava_flow=1, falling_node=1 },
 	node_box = {
 		type = "fixed",
 		fixed = {

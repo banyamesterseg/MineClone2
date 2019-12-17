@@ -1,5 +1,7 @@
 local S = minetest.get_translator("mcl_flowers")
 
+local mod_screwdriver = minetest.get_modpath("screwdriver") ~= nil
+
 -- Minetest 0.4 mod: default
 -- See README.txt for licensing and other information.
 local init = os.clock()
@@ -7,6 +9,20 @@ local init = os.clock()
 -- Simple flower template
 local smallflowerlongdesc = S("This is a small flower. Small flowers are mainly used for dye production and can also be potted.")
 local plant_usage_help = S("It can only be placed on a block on which it would also survive.")
+
+local get_palette_color_from_pos = function(pos)
+	local biome_data = minetest.get_biome_data(pos)
+	local index = 0
+	if biome_data then
+		local biome = biome_data.biome
+		local biome_name = minetest.get_biome_name(biome)
+		local reg_biome = minetest.registered_biomes[biome_name]
+		if reg_biome then
+			index = reg_biome._mcl_palette_index
+		end
+	end
+	return index
+end
 
 -- on_place function for flowers
 local on_place_flower = mcl_util.generate_on_place_plant_function(function(pos, node, itemstack)
@@ -17,7 +33,7 @@ local on_place_flower = mcl_util.generate_on_place_plant_function(function(pos, 
 	local has_palette = minetest.registered_nodes[itemstack:get_name()].palette ~= nil
 	local colorize
 	if has_palette then
-		colorize = minetest.registered_nodes[soil_node.name]._mcl_grass_palette_index
+		colorize = get_palette_color_from_pos(pos)
 	end
 	if not colorize then
 		colorize = 0
@@ -226,8 +242,8 @@ local function add_large_plant(name, desc, longdesc, bottom_img, top_img, inv_im
 			local top = { x = bottom.x, y = bottom.y + 1, z = bottom.z }
 			local bottom_buildable = minetest.registered_nodes[minetest.get_node(bottom).name].buildable_to
 			local top_buildable = minetest.registered_nodes[minetest.get_node(top).name].buildable_to
-			local floorname = minetest.get_node({x=bottom.x, y=bottom.y-1, z=bottom.z}).name
-			if not minetest.registered_nodes[floorname] then
+			local floor = minetest.get_node({x=bottom.x, y=bottom.y-1, z=bottom.z})
+			if not minetest.registered_nodes[floor.name] then
 				return itemstack
 			end
 
@@ -243,10 +259,10 @@ local function add_large_plant(name, desc, longdesc, bottom_img, top_img, inv_im
 			-- * If not a flower, also allowed on podzol and coarse dirt
 			-- * Only with light level >= 8
 			-- * Only if two enough space
-			if (floorname == "mcl_core:dirt" or minetest.get_item_group(floorname, "grass_block") == 1 or (not is_flower and (floorname == "mcl_core:coarse_dirt" or floorname == "mcl_core:podzol" or floorname == "mcl_core:podzol_snow"))) and bottom_buildable and top_buildable and light_ok then
+			if (floor.name == "mcl_core:dirt" or minetest.get_item_group(floor.name, "grass_block") == 1 or (not is_flower and (floor.name == "mcl_core:coarse_dirt" or floor.name == "mcl_core:podzol" or floor.name == "mcl_core:podzol_snow"))) and bottom_buildable and top_buildable and light_ok then
 				local param2
 				if grass_color then
-					param2 = minetest.registered_nodes[floorname]._mcl_grass_palette_index
+					param2 = get_palette_color_from_pos(bottom)
 				end
 				-- Success! We can now place the flower
 				minetest.sound_play(minetest.registered_nodes[itemstring].sounds.place, {pos = bottom, gain=1})
@@ -347,6 +363,10 @@ minetest.register_abm({
 	end,
 })
 
+local on_rotate
+if mod_screwdriver then
+	on_rotate = screwdriver.rotate_simple
+end
 
 -- Lily Pad
 minetest.register_node("mcl_flowers:waterlily", {
@@ -413,7 +433,8 @@ minetest.register_node("mcl_flowers:waterlily", {
 		end
 
 		return itemstack
-	end
+	end,
+	on_rotate = on_rotate,
 })
 
 -- Legacy support

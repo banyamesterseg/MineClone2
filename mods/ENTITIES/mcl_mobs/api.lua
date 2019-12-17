@@ -31,7 +31,6 @@ end
 
 -- localize math functions
 local pi = math.pi
-local square = math.sqrt
 local sin = math.sin
 local cos = math.cos
 local abs = math.abs
@@ -97,19 +96,29 @@ local mod_mobspawners = minetest.get_modpath("mcl_mobspawners") ~= nil
 local mod_hunger = minetest.get_modpath("mcl_hunger") ~= nil
 
 -- play sound
-local mob_sound = function(self, sound, is_opinion, fixed_pitch)
+local mob_sound = function(self, soundname, is_opinion, fixed_pitch)
 
+	local soundinfo
+	if self.sounds_child and self.child then
+		soundinfo = self.sounds_child
+	elseif self.sounds then
+		soundinfo = self.sounds
+	end
+	if not soundinfo then
+		return
+	end
+	local sound = soundinfo[soundname]
 	if sound then
 		if is_opinion and self.opinion_sound_cooloff > 0 then
 			return
 		end
 		local pitch
 		if not fixed_pitch then
-			local base_pitch = self.sounds.base_pitch
+			local base_pitch = soundinfo.base_pitch
 			if not base_pitch then
 				base_pitch = 1
 			end
-			if self.child then
+			if self.child and (not self.sounds_child) then
 				-- Children have higher pitch
 				pitch = base_pitch * 1.5
 			else
@@ -141,7 +150,7 @@ local do_attack = function(self, player)
 
 	-- TODO: Implement war_cry sound without being annoying
 	--if random(0, 100) < 90 then
-		--mob_sound(self, self.sounds.war_cry, true)
+		--mob_sound(self, "war_cry", true)
 	--end
 end
 
@@ -260,15 +269,6 @@ function mobs:set_animation(self, anim)
 end
 
 
--- calculate distance
-local get_distance = function(a, b)
-
-	local x, y, z = a.x - b.x, a.y - b.y, a.z - b.z
-
-	return square(x * x + y * y + z * z)
-end
-
-
 -- check line of sight (BrunoMine)
 local line_of_sight = function(self, pos1, pos2, stepsize)
 
@@ -293,7 +293,7 @@ local line_of_sight = function(self, pos1, pos2, stepsize)
 	local nn = minetest.get_node(pos).name
 
 	-- Target Distance (td) to travel
-	local td = get_distance(pos1, pos2)
+	local td = vector.distance(pos1, pos2)
 
 	-- Actual Distance (ad) traveled
 	local ad = 0
@@ -309,7 +309,7 @@ local line_of_sight = function(self, pos1, pos2, stepsize)
 		end
 
 		-- Moves the analyzed pos
-		local d = get_distance(pos1, pos2)
+		local d = vector.distance(pos1, pos2)
 
 		npos1.x = ((pos2.x - pos1.x) / d * stepsize) + pos1.x
 		npos1.y = ((pos2.y - pos1.y) / d * stepsize) + pos1.y
@@ -522,7 +522,7 @@ local check_for_death = function(self, cause, cmi_cause)
 					remove_texture_mod(self, "^[colorize:#FF000040")
 				end
 			end, self)
-			mob_sound(self, self.sounds.damage)
+			mob_sound(self, "damage")
 		end
 
 		-- backup nametag so we can show health stats
@@ -549,7 +549,7 @@ local check_for_death = function(self, cause, cmi_cause)
 		item_drop(self, nil)
 	end
 
-	mob_sound(self, self.sounds.death)
+	mob_sound(self, "death")
 
 	local pos = self.object:get_pos()
 
@@ -938,7 +938,7 @@ local do_jump = function(self)
 			end, self, v)
 
 			if self.jump_sound_cooloff <= 0 then
-				mob_sound(self, self.sounds.jump)
+				mob_sound(self, "jump")
 				self.jump_sound_cooloff = 0.5
 			end
 		else
@@ -980,7 +980,7 @@ local entity_physics = function(pos, radius)
 
 		obj_pos = objs[n]:get_pos()
 
-		dist = get_distance(pos, obj_pos)
+		dist = vector.distance(pos, obj_pos)
 		if dist < 1 then dist = 1 end
 
 		local damage = floor((4 / dist) * radius)
@@ -1453,7 +1453,7 @@ local smart_mobs = function(self, s, p, dist, dtime)
 		else
 			-- yay i found path
 			-- TODO: Implement war_cry sound without being annoying
-			--mob_sound(self, self.sounds.war_cry, true)
+			--mob_sound(self, "war_cry", true)
 			set_velocity(self, self.walk_velocity)
 
 			-- follow path now that it has it
@@ -1529,7 +1529,7 @@ local monster_attack = function(self)
 			p = player:get_pos()
 			sp = s
 
-			dist = get_distance(p, s)
+			dist = vector.distance(p, s)
 
 			-- aim higher to make looking up hills more realistic
 			p.y = p.y + 1
@@ -1575,7 +1575,7 @@ local npc_attack = function(self)
 			p = obj.object:get_pos()
 			sp = s
 
-			local dist = get_distance(p, s)
+			local dist = vector.distance(p, s)
 
 			-- aim higher to make looking up hills more realistic
 			p.y = p.y + 1
@@ -1663,7 +1663,7 @@ local runaway_from = function(self)
 			p.y = p.y + 1
 			sp.y = sp.y + 1
 
-			dist = get_distance(p, s)
+			dist = vector.distance(p, s)
 
 
 			-- choose closest player/mpb to runaway from
@@ -1713,7 +1713,7 @@ local follow_flop = function(self)
 
 		for n = 1, #players do
 
-			if get_distance(players[n]:get_pos(), s) < self.view_range
+			if vector.distance(players[n]:get_pos(), s) < self.view_range
 			and not mobs.invis[ players[n]:get_player_name() ] then
 
 				self.following = players[n]
@@ -1761,7 +1761,7 @@ local follow_flop = function(self)
 
 		if p then
 
-			local dist = get_distance(p, s)
+			local dist = vector.distance(p, s)
 
 			-- dont follow if out of range
 			if dist > self.view_range then
@@ -2020,7 +2020,7 @@ local do_states = function(self, dtime)
 		-- calculate distance from mob and enemy
 		local s = self.object:get_pos()
 		local p = self.attack:get_pos() or s
-		local dist = get_distance(p, s)
+		local dist = vector.distance(p, s)
 
 		-- stop attacking if player invisible or out of range
 		if dist > self.view_range
@@ -2066,7 +2066,7 @@ local do_states = function(self, dtime)
 				self.v_start = true
 				self.timer = 0
 				self.blinktimer = 0
-				mob_sound(self, self.sounds.fuse, nil, false)
+				mob_sound(self, "fuse", nil, false)
 
 			-- stop timer if out of reach or direct line of sight
 			elseif self.allow_fuse_reset
@@ -2298,7 +2298,7 @@ local do_states = function(self, dtime)
 						if line_of_sight(self, p2, s2) == true then
 
 							-- play attack sound
-							mob_sound(self, self.sounds.attack)
+							mob_sound(self, "attack")
 
 							-- punch player (or what player is attached to)
 							local attached = self.attack:get_attach()
@@ -2329,7 +2329,7 @@ local do_states = function(self, dtime)
 			p.y = p.y - .5
 			s.y = s.y + .5
 
-			local dist = get_distance(p, s)
+			local dist = vector.distance(p, s)
 			local vec = {
 				x = p.x - s.x,
 				y = p.y - s.y,
@@ -2352,29 +2352,39 @@ local do_states = function(self, dtime)
 				set_animation(self, "shoot")
 
 				-- play shoot attack sound
-				mob_sound(self, self.sounds.shoot_attack)
+				mob_sound(self, "shoot_attack")
 
 				local p = self.object:get_pos()
 
 				p.y = p.y + (self.collisionbox[2] + self.collisionbox[5]) / 2
 
+				-- Shoot arrow
 				if minetest.registered_entities[self.arrow] then
 
-					local obj = minetest.add_entity(p, self.arrow)
-					local ent = obj:get_luaentity()
+					local arrow, ent
+					local v = 1
+					if not self.shoot_arrow then
+						arrow = minetest.add_entity(p, self.arrow)
+						ent = arrow:get_luaentity()
+						if ent.velocity then
+							v = ent.velocity
+						end
+						ent.switch = 1
+						ent.owner_id = tostring(self.object) -- add unique owner id to arrow
+					end
+
 					local amount = (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z) ^ 0.5
-					local v = ent.velocity or 1 -- or set to default
-
-					ent.switch = 1
-					ent.owner_id = tostring(self.object) -- add unique owner id to arrow
-
-					 -- offset makes shoot aim accurate
+					-- offset makes shoot aim accurate
 					vec.y = vec.y + self.shoot_offset
 					vec.x = vec.x * (v / amount)
 					vec.y = vec.y * (v / amount)
 					vec.z = vec.z * (v / amount)
-
-					obj:set_velocity(vec)
+					if self.shoot_arrow then
+						vec = vector.normalize(vec)
+						self:shoot_arrow(p, vec)
+					else
+						arrow:set_velocity(vec)
+					end
 				end
 			end
 		end
@@ -3015,7 +3025,7 @@ local mob_step = function(self, dtime)
 
 	-- mob plays random sound at times
 	if random(1, 100) == 1 then
-		mob_sound(self, self.sounds.random, true)
+		mob_sound(self, "random", true)
 	end
 
 	-- environmental damage timer (every 1 second)
@@ -3225,6 +3235,8 @@ minetest.register_entity(name, {
 	can_despawn = can_despawn,
 	child = def.child or false,
 	texture_mods = {},
+	shoot_arrow = def.shoot_arrow,
+        sounds_child = def.sounds_child,
 	-- End of MCL2 extensions
 
 	on_spawn = def.on_spawn,
@@ -3854,7 +3866,7 @@ function mobs:feed_tame(self, clicker, feed_count, breed, tame)
 			end
 
 			-- make sound when fed so many times
-			mob_sound(self, self.sounds.random, true)
+			mob_sound(self, "random", true)
 		end
 
 		return true

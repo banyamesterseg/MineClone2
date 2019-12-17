@@ -2,6 +2,30 @@ local S = minetest.get_translator("mesecons_wallever")
 
 local lever_get_output_rules = mesecon.rules.buttonlike_get
 
+local on_rotate = function(pos, node, user, mode)
+	if mode == screwdriver.ROTATE_FACE then
+		if node.param2 == 10 then
+			node.param2 = 13
+			minetest.swap_node(pos, node)
+			return true
+		elseif node.param2 == 13 then
+			node.param2 = 10
+			minetest.swap_node(pos, node)
+			return true
+		elseif node.param2 == 8 then
+			node.param2 = 15
+			minetest.swap_node(pos, node)
+			return true
+		elseif node.param2 == 15 then
+			node.param2 = 8
+			minetest.swap_node(pos, node)
+			return true
+		end
+	end
+	-- TODO: Rotate axis
+	return false
+end
+
 -- LEVER
 minetest.register_node("mesecons_walllever:wall_lever_off", {
 	drawtype = "mesh",
@@ -102,7 +126,7 @@ minetest.register_node("mesecons_walllever:wall_lever_off", {
 		rules = lever_get_output_rules,
 		state = mesecon.state.off
 	}},
-	on_rotate = false,
+	on_rotate = on_rotate,
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
 })
@@ -111,7 +135,6 @@ minetest.register_node("mesecons_walllever:wall_lever_on", {
 	tiles = {
 		"jeija_wall_lever_lever_light_on.png",
 	},
-	inventory_image = "jeija_wall_lever.png",
 	paramtype = "light",
 	paramtype2 = "facedir",
 	mesh = "jeija_wall_lever_on.obj",
@@ -124,7 +147,6 @@ minetest.register_node("mesecons_walllever:wall_lever_on", {
 	groups = {handy=1, not_in_creative_inventory = 1, dig_by_water=1, destroy_by_lava_flow=1, dig_by_piston=1, attached_node_facedir=1},
 	is_ground_content = false,
 	drop = '"mesecons_walllever:wall_lever_off" 1',
-	description=S("Lever"),
 	_doc_items_create_entry = false,
 	on_rightclick = function (pos, node)
 		minetest.swap_node(pos, {name="mesecons_walllever:wall_lever_off", param2=node.param2})
@@ -136,7 +158,7 @@ minetest.register_node("mesecons_walllever:wall_lever_on", {
 		rules = lever_get_output_rules,
 		state = mesecon.state.on
 	}},
-	on_rotate = false,
+	on_rotate = on_rotate,
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
 })

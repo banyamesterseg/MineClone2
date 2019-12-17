@@ -4,13 +4,50 @@ local S = minetest.get_translator("mcl_torches")
 -- 3d torch part
 --
 
+-- Check if placement at given node is allowed
+local function check_placement_allowed(node, wdir)
+	-- Torch placement rules: Disallow placement on some nodes. General rule: Solid, opaque, full cube collision box nodes are allowed.
+	-- Special allowed nodes:
+	-- * soul sand
+	-- * mob spawner
+	-- * chorus flower
+	-- * glass, barrier, ice
+	-- * Fence, wall, end portal frame with ender eye: Only on top
+	-- * Slab, stairs: Only on top if upside down
+
+	-- Special forbidden nodes:
+	-- * Piston, sticky piston
+	local def = minetest.registered_nodes[node.name]
+	if not def then
+		return false
+	-- No ceiling torches
+	elseif wdir == 0 then
+		return false
+	elseif not def.buildable_to then
+		if node.name ~= "mcl_core:ice" and node.name ~= "mcl_nether:soul_sand" and node.name ~= "mcl_mobspawners:spawner" and node.name ~= "mcl_core:barrier" and node.name ~= "mcl_end:chorus_flower" and node.name ~= "mcl_end:chorus_flower_dead" and (not def.groups.glass) and
+				((not def.groups.solid) or (not def.groups.opaque)) then
+			-- Only allow top placement on these nodes
+			if node.name == "mcl_end:dragon_egg" or node.name == "mcl_portals:end_portal_frame_eye" or def.groups.fence == 1 or def.groups.wall or def.groups.slab_top == 1 or def.groups.anvil or def.groups.pane or (def.groups.stair == 1 and minetest.facedir_to_dir(node.param2).y ~= 0) then
+				if wdir ~= 1 then
+					return false
+				end
+			else
+				return false
+			end
+		elseif minetest.get_item_group(node.name, "piston") >= 1 then
+			return false
+		end
+	end
+	return true
+end
+
 mcl_torches = {}
 
 mcl_torches.register_torch = function(substring, description, doc_items_longdesc, doc_items_usagehelp, icon, mesh_floor, mesh_wall, tiles, light, groups, sounds, moredef)
 	local itemstring = minetest.get_current_modname()..":"..substring
 	local itemstring_wall = minetest.get_current_modname()..":"..substring.."_wall"
 
-	if light == nil then light = 14 end
+	if light == nil then light = minetest.LIGHT_MAX end
 	if mesh_floor == nil then mesh_floor = "mcl_torches_torch_floor.obj" end
 	if mesh_wall == nil then mesh_wall = "mcl_torches_torch_wall.obj" end
 	if groups == nil then groups = {} end
@@ -67,34 +104,8 @@ mcl_torches.register_torch = function(substring, description, doc_items_longdesc
 			local above = pointed_thing.above
 			local wdir = minetest.dir_to_wallmounted({x = under.x - above.x, y = under.y - above.y, z = under.z - above.z})
 
-			-- Torch placement rules: Disallow placement on some nodes. General rule: Solid, opaque, full cube collision box nodes are allowed.
-			-- Special allowed nodes:
-			-- * soul sand
-			-- * end portal frame (TODO)
-			-- * mob spawner
-			-- * Fence, wall, glass, hopper: Only on top
-			-- * Slab: Only on top if upside down
-			-- * Stairs: Only on top if upside down
-
-			-- Special forbidden nodes:
-			-- * Piston
-			-- * Sticky piston
-			if not def.buildable_to then
-				if node.name ~= "mcl_nether:soul_sand" and node.name ~= "mcl_mobspawners:spawner" and
-						((not def.groups.solid) or (not def.groups.opaque)) then
-					-- Only allow top placement on these nodes
-					if def.groups.glass or node.name == "mcl_hoppers:hopper" or node.name == "mcl_hoppers:hopper_side" or node.name == "mcl_hoppers:hopper_disabled" or node.name == "mcl_hoppers:hopper_side_disabled" or def.groups.fence == 1 or def.groups.wall or def.groups.slab_top == 1 or (def.groups.stair == 1 and minetest.facedir_to_dir(node.param2).y ~= 0) then
-						if wdir ~= 1 then
-							return itemstack
-						end
-					else
-						return itemstack
-					end
-				elseif node.name == "mesecons_pistons:piston_up_normal_off" or node.name == "mesecons_pistons:piston_up_sticky_off" or
-						node.name == "mesecons_pistons:piston_normal_off" or node.name == "mesecons_pistons:piston_sticky_off" or
-						node.name == "mesecons_pistons:piston_down_normal_off" or node.name == "mesecons_pistons:piston_down_sticky_off" then
-					return itemstack
-				end
+			if check_placement_allowed(node, wdir) == false then
+				return itemstack
 			end
 
 			local itemstring = itemstack:get_name()
@@ -102,10 +113,7 @@ mcl_torches.register_torch = function(substring, description, doc_items_longdesc
 			local idef = fakestack:get_definition()
 			local retval
 
-			if wdir == 0 then
-				-- Prevent placement of ceiling torches
-				return itemstack
-			elseif wdir == 1 then
+			if wdir == 1 then
 				retval = fakestack:set_name(itemstring)
 			else
 				retval = fakestack:set_name(itemstring_wall)
@@ -122,7 +130,8 @@ mcl_torches.register_torch = function(substring, description, doc_items_longdesc
 				minetest.sound_play(idef.sounds.place, {pos=under, gain=1})
 			end
 			return itemstack
-		end
+		end,
+		on_rotate = false,
 	}
 	if moredef ~= nil then
 		for k,v in pairs(moredef) do
@@ -153,6 +162,7 @@ mcl_torches.register_torch = function(substring, description, doc_items_longdesc
 			wall_side = {-0.5, -0.5, -0.1, -0.2, 0.1, 0.1},
 		},
 		sounds = sounds,
+		on_rotate = false,
 	}
 	if moredef ~= nil then
 		for k,v in pairs(moredef) do
@@ -179,7 +189,7 @@ mcl_torches.register_torch("torch",
 		name = "default_torch_on_floor_animated.png",
 		animation = {type = "vertical_frames", aspect_w = 16, aspect_h = 16, length = 3.3}
 	}},
-	14,
+	minetest.LIGHT_MAX,
 	{dig_immediate=3, torch=1, deco_block=1},
 	mcl_sounds.node_sound_wood_defaults(),
 	{_doc_items_hidden = false})

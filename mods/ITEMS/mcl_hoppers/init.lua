@@ -21,7 +21,7 @@ local mcl_hoppers_formspec =
 local def_hopper = {
 	inventory_image = "mcl_hoppers_item.png",
 	wield_image = "mcl_hoppers_item.png",
-	groups = {pickaxey=1, container=2,deco_block=1,},
+	groups = {pickaxey=1, container=2,deco_block=1,hopper=1},
 	drawtype = "nodebox",
 	paramtype = "light",
 	-- FIXME: mcl_hoppers_hopper_inside.png is unused by hoppers.
@@ -183,6 +183,7 @@ minetest.register_node("mcl_hoppers:hopper", def_hopper_enabled)
 -- Disabled downwards hopper
 local def_hopper_disabled = table.copy(def_hopper)
 def_hopper_disabled.description = S("Disabled Hopper")
+def_hopper_disabled.inventory_image = nil
 def_hopper_disabled._doc_items_create_entry = false
 def_hopper_disabled.groups.not_in_creative_inventory = 1
 def_hopper_disabled.drop = "mcl_hoppers:hopper"
@@ -207,7 +208,7 @@ end
 local def_hopper_side = {
 	_doc_items_create_entry = false,
 	drop = "mcl_hoppers:hopper",
-	groups = {pickaxey=1, container=2,not_in_creative_inventory=1},
+	groups = {pickaxey=1, container=2,not_in_creative_inventory=1,hopper=2},
 	drawtype = "nodebox",
 	paramtype = "light",
 	paramtype2 = "facedir",
@@ -444,6 +445,14 @@ minetest.register_abm({
 		if not minetest.registered_nodes[abovenode.name] then return end
 		local g = minetest.registered_nodes[abovenode.name].groups.container
 		mcl_util.move_item_container(above, pos)
+
+		-- Also suck in non-fuel items from furnace fuel slot
+		if not sucked and g == 4 then
+			local finv = minetest.get_inventory({type="node", pos=above})
+			if finv and not mcl_util.is_fuel(finv:get_stack("fuel", 1)) then
+				mcl_util.move_item_container(above, pos, "fuel")
+			end
+		end
 
 		-- Move an item from the hopper into the container to which the hopper points to
 		local g = minetest.registered_nodes[frontnode.name].groups.container

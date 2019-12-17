@@ -175,11 +175,6 @@ local pistonspec_normal = {
 
 local usagehelp_piston = S("This block can have one of 6 possible orientations.")
 
-local on_rotate
-if minetest.get_modpath("screwdriver") then
-	on_rotate = screwdriver.disallow
-end
-
 -- offstate
 minetest.register_node("mesecons_pistons:piston_normal_off", {
 	description = S("Piston"),
@@ -193,7 +188,7 @@ minetest.register_node("mesecons_pistons:piston_normal_off", {
 		"mesecons_piston_back.png",
 		"mesecons_piston_pusher_front.png"
 		},
-	groups = {handy = 1},
+	groups = {handy = 1, piston=1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -206,7 +201,12 @@ minetest.register_node("mesecons_pistons:piston_normal_off", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = function(pos, node, user, mode)
+		if mode == screwdriver.ROTATE_AXIS then
+			minetest.set_node(pos, {name="mesecons_pistons:piston_up_normal_off"})
+			return true
+		end
+	end,
 })
 
 -- onstate
@@ -220,7 +220,7 @@ minetest.register_node("mesecons_pistons:piston_normal_on", {
 		"mesecons_piston_back.png",
 		"mesecons_piston_on_front.png"
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=1, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -236,7 +236,7 @@ minetest.register_node("mesecons_pistons:piston_normal_on", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- pusher
@@ -252,15 +252,17 @@ minetest.register_node("mesecons_pistons:piston_pusher_normal", {
 		},
 	paramtype = "light",
 	paramtype2 = "facedir",
+	groups = { piston_pusher = 1 },
 	is_ground_content = false,
 	after_destruct = piston_remove_base,
 	diggable = false,
+	drop = "",
 	corresponding_piston = "mesecons_pistons:piston_normal_on",
 	selection_box = piston_pusher_box,
 	node_box = piston_pusher_box,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- Sticky ones
@@ -289,7 +291,7 @@ minetest.register_node("mesecons_pistons:piston_sticky_off", {
 		"mesecons_piston_back.png",
 		"mesecons_piston_pusher_front_sticky.png"
 		},
-	groups = {handy=1},
+	groups = {handy=1, piston=2},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -302,7 +304,12 @@ minetest.register_node("mesecons_pistons:piston_sticky_off", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = function(pos, node, user, mode)
+		if mode == screwdriver.ROTATE_AXIS then
+			minetest.set_node(pos, {name="mesecons_pistons:piston_up_sticky_off"})
+			return true
+		end
+	end,
 })
 
 -- onstate
@@ -316,7 +323,7 @@ minetest.register_node("mesecons_pistons:piston_sticky_on", {
 		"mesecons_piston_back.png",
 		"mesecons_piston_on_front.png"
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=2, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -332,7 +339,7 @@ minetest.register_node("mesecons_pistons:piston_sticky_on", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- pusher
@@ -348,15 +355,17 @@ minetest.register_node("mesecons_pistons:piston_pusher_sticky", {
 		},
 	paramtype = "light",
 	paramtype2 = "facedir",
+	groups = { piston_pusher = 2 },
 	is_ground_content = false,
 	after_destruct = piston_remove_base,
 	diggable = false,
+	drop = "",
 	corresponding_piston = "mesecons_pistons:piston_sticky_on",
 	selection_box = piston_pusher_box,
 	node_box = piston_pusher_box,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 --
@@ -399,7 +408,7 @@ minetest.register_node("mesecons_pistons:piston_up_normal_off", {
 		"mesecons_piston_bottom.png",
 		"mesecons_piston_bottom.png",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=1, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -414,7 +423,13 @@ minetest.register_node("mesecons_pistons:piston_up_normal_off", {
 	}),
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = function(pos, node, user, mode)
+		if mode == screwdriver.ROTATE_AXIS then
+			minetest.set_node(pos, {name="mesecons_pistons:piston_down_normal_off"})
+			return true
+		end
+		return false
+	end,
 })
 
 -- onstate
@@ -428,7 +443,7 @@ minetest.register_node("mesecons_pistons:piston_up_normal_on", {
 		"mesecons_piston_bottom.png",
 		"mesecons_piston_bottom.png",
 		},
-	groups = {hanry=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston_=1, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -444,7 +459,7 @@ minetest.register_node("mesecons_pistons:piston_up_normal_on", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- pusher
@@ -460,15 +475,17 @@ minetest.register_node("mesecons_pistons:piston_up_pusher_normal", {
 		},
 	paramtype = "light",
 	paramtype2 = "facedir",
+	groups = { piston_pusher = 1 },
 	is_ground_content = false,
 	after_destruct = piston_remove_base,
 	diggable = false,
+	drop = "",
 	corresponding_piston = "mesecons_pistons:piston_up_normal_on",
 	selection_box = piston_up_pusher_box,
 	node_box = piston_up_pusher_box,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 
@@ -494,7 +511,7 @@ minetest.register_node("mesecons_pistons:piston_up_sticky_off", {
 		"mesecons_piston_bottom.png",
 		"mesecons_piston_bottom.png",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=2, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -509,7 +526,13 @@ minetest.register_node("mesecons_pistons:piston_up_sticky_off", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = function(pos, node, user, mode)
+		if mode == screwdriver.ROTATE_AXIS then
+			minetest.set_node(pos, {name="mesecons_pistons:piston_down_sticky_off"})
+			return true
+		end
+		return false
+	end,
 })
 
 -- onstate
@@ -523,7 +546,7 @@ minetest.register_node("mesecons_pistons:piston_up_sticky_on", {
 		"mesecons_piston_bottom.png",
 		"mesecons_piston_bottom.png",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=2, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -539,7 +562,7 @@ minetest.register_node("mesecons_pistons:piston_up_sticky_on", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- pusher
@@ -555,15 +578,17 @@ minetest.register_node("mesecons_pistons:piston_up_pusher_sticky", {
 		},
 	paramtype = "light",
 	paramtype2 = "facedir",
+	groups = { piston_pusher = 2 },
 	is_ground_content = false,
 	after_destruct = piston_remove_base,
 	diggable = false,
+	drop = "",
 	corresponding_piston = "mesecons_pistons:piston_up_sticky_on",
 	selection_box = piston_up_pusher_box,
 	node_box = piston_up_pusher_box,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 --
@@ -608,7 +633,7 @@ minetest.register_node("mesecons_pistons:piston_down_normal_off", {
 		"mesecons_piston_bottom.png^[transformR180",
 		"mesecons_piston_bottom.png^[transformR180",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=1, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -621,7 +646,13 @@ minetest.register_node("mesecons_pistons:piston_down_normal_off", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = function(pos, node, user, mode)
+		if mode == screwdriver.ROTATE_AXIS then
+			minetest.set_node(pos, {name="mesecons_pistons:piston_normal_off"})
+			return true
+		end
+		return false
+	end,
 })
 
 -- onstate
@@ -635,7 +666,7 @@ minetest.register_node("mesecons_pistons:piston_down_normal_on", {
 		"mesecons_piston_bottom.png^[transformR180",
 		"mesecons_piston_bottom.png^[transformR180",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=1, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -651,7 +682,7 @@ minetest.register_node("mesecons_pistons:piston_down_normal_on", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- pusher
@@ -667,15 +698,17 @@ minetest.register_node("mesecons_pistons:piston_down_pusher_normal", {
 		},
 	paramtype = "light",
 	paramtype2 = "facedir",
+	groups = { piston_pusher = 1 },
 	is_ground_content = false,
 	after_destruct = piston_remove_base,
 	diggable = false,
+	drop = "",
 	corresponding_piston = "mesecons_pistons:piston_down_normal_on",
 	selection_box = piston_down_pusher_box,
 	node_box = piston_down_pusher_box,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- Sticky
@@ -698,7 +731,7 @@ minetest.register_node("mesecons_pistons:piston_down_sticky_off", {
 		"mesecons_piston_bottom.png^[transformR180",
 		"mesecons_piston_bottom.png^[transformR180",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=2, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -711,7 +744,13 @@ minetest.register_node("mesecons_pistons:piston_down_sticky_off", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = function(pos, node, user, mode)
+		if mode == screwdriver.ROTATE_AXIS then
+			minetest.set_node(pos, {name="mesecons_pistons:piston_sticky_off"})
+			return true
+		end
+		return false
+	end,
 })
 
 -- onstate
@@ -725,7 +764,7 @@ minetest.register_node("mesecons_pistons:piston_down_sticky_on", {
 		"mesecons_piston_bottom.png^[transformR180",
 		"mesecons_piston_bottom.png^[transformR180",
 		},
-	groups = {handy=1, not_in_creative_inventory = 1},
+	groups = {handy=1, piston=1, not_in_creative_inventory = 1},
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
@@ -741,7 +780,7 @@ minetest.register_node("mesecons_pistons:piston_down_sticky_on", {
 	}},
 	_mcl_blast_resistance = 2.5,
 	_mcl_hardness = 0.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 -- pusher
@@ -757,15 +796,17 @@ minetest.register_node("mesecons_pistons:piston_down_pusher_sticky", {
 		},
 	paramtype = "light",
 	paramtype2 = "facedir",
+	groups = { piston_pusher = 2 },
 	is_ground_content = false,
 	after_destruct = piston_remove_base,
 	diggable = false,
+	drop = "",
 	corresponding_piston = "mesecons_pistons:piston_down_sticky_on",
 	selection_box = piston_down_pusher_box,
 	node_box = piston_down_pusher_box,
 	sounds = mcl_sounds.node_sound_wood_defaults(),
 	_mcl_blast_resistance = 2.5,
-	on_rotate = on_rotate,
+	on_rotate = false,
 })
 
 

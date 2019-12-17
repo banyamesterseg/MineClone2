@@ -639,24 +639,19 @@ end
 
 local grass_spread_randomizer = PseudoRandom(minetest.get_mapgen_setting("seed"))
 
--- Return appropriate grass block node for pos. Dry grass for dry/hot biomes, normal grass otherwise.
+-- Return appropriate grass block node for pos
 function mcl_core.get_grass_block_type(pos)
 	local biome_data = minetest.get_biome_data(pos)
-	local dry = false
+	local index = 0
 	if biome_data then
 		local biome = biome_data.biome
 		local biome_name = minetest.get_biome_name(biome)
 		local reg_biome = minetest.registered_biomes[biome_name]
 		if reg_biome then
-			local biome_type = reg_biome._mcl_biome_type
-			dry = biome_type == "hot"
+			index = reg_biome._mcl_palette_index
 		end
 	end
-	if dry then
-		return {name="mcl_core:dirt_with_dry_grass"}
-	else
-		return {name="mcl_core:dirt_with_grass"}
-	end
+	return {name="mcl_core:dirt_with_grass", param2=index}
 end
 
 ------------------------------
@@ -758,6 +753,33 @@ minetest.register_abm({
 		local nodedef = minetest.registered_nodes[name]
 		if name ~= "ignore" and nodedef and (nodedef.groups and nodedef.groups.solid) then
 			minetest.set_node(pos, {name = "mcl_core:dirt"})
+		end
+	end,
+})
+
+minetest.register_lbm({
+	label = "Replace legacy dry grass",
+	name = "mcl_core:replace_legacy_dry_grass",
+	nodenames = {"mcl_core:dirt_with_dry_grass", "mcl_core:dirt_with_dry_grass_snow"},
+	action = function(pos, node)
+		local biome_data = minetest.get_biome_data(pos)
+		if biome_data then
+			local biome = biome_data.biome
+			local biome_name = minetest.get_biome_name(biome)
+			local reg_biome = minetest.registered_biomes[biome_name]
+			if reg_biome then
+				if node.name == "mcl_core:dirt_with_dry_grass_snow" then
+					node.name = "mcl_core:dirt_with_grass_snow"
+				else
+					node.name = "mcl_core:dirt_with_grass"
+				end
+				node.param2 = reg_biome._mcl_palette_index
+				-- Fall back to savanna palette index
+				if not node.param2 then
+					node.param2 = 1
+				end
+				minetest.set_node(pos, node)
+			end
 		end
 	end,
 })
@@ -1232,10 +1254,11 @@ end
 -- * itemstring_clear: Itemstring of the original “clear” node without snow
 -- * tiles: Optional custom tiles
 -- * sounds: Optional custom sounds
+-- * clear_colorization: Optional. If true, will clear all paramtype2="color" related node def. fields
 --
 -- The snowable nodes also MUST have _mcl_snowed defined to contain the name
 -- of the snowed node.
-mcl_core.register_snowed_node = function(itemstring_snowed, itemstring_clear, tiles, sounds)
+mcl_core.register_snowed_node = function(itemstring_snowed, itemstring_clear, tiles, sounds, clear_colorization)
 	local def = table.copy(minetest.registered_nodes[itemstring_clear])
 	local create_doc_alias
 	if def.description then
@@ -1270,6 +1293,13 @@ mcl_core.register_snowed_node = function(itemstring_snowed, itemstring_clear, ti
 	else
 		def.tiles = tiles
 	end
+	if clear_colorization then
+		def.paramtype2 = nil
+		def.palette = nil
+		def.palette_index = nil
+		def.color = nil
+		def.overlay_tiles = nil
+	end
 	if not sounds then
 		def.sounds = mcl_sounds.node_sound_dirt_defaults({
 			footstep = { name = "pedology_snow_soft_footstep", gain = 0.5 }
@@ -1292,7 +1322,7 @@ end
 mcl_core.clear_snow_dirt = function(pos, node)
 	local def = minetest.registered_nodes[node.name]
 	if def._mcl_snowless then
-		minetest.swap_node(pos, {name = def._mcl_snowless})
+		minetest.swap_node(pos, {name = def._mcl_snowless, param2=node.param2})
 	end
 end
 
@@ -1313,7 +1343,7 @@ mcl_core.on_snowable_construct = function(pos)
 	if minetest.get_item_group(anode.name, "snow_cover") == 1 then
 		local def = minetest.registered_nodes[node.name]
 		if def._mcl_snowed then
-			minetest.swap_node(pos, {name = def._mcl_snowed})
+			minetest.swap_node(pos, {name = def._mcl_snowed, param2=node.param2})
 		end
 	end
 end
@@ -1334,7 +1364,7 @@ mcl_core.on_snow_construct = function(pos)
 	local node = minetest.get_node(npos)
 	local def = minetest.registered_nodes[node.name]
 	if def._mcl_snowed then
-		minetest.swap_node(npos, {name = def._mcl_snowed})
+		minetest.swap_node(npos, {name = def._mcl_snowed, param2=node.param2})
 	end
 end
 -- after_destruct
