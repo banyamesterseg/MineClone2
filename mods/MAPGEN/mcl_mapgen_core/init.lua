@@ -854,6 +854,122 @@ local function register_mgv6_decorations()
 		y_max = mcl_vars.overworld_max,
 		decoration = "mcl_flowers:tallgrass",
 	})
+
+	-- Seagrass and kelp
+	local materials = {"dirt","sand"}
+	for i=1, #materials do
+		local mat = materials[i]
+
+		minetest.register_decoration({
+			deco_type = "simple",
+			spawn_by = {"group:water"},
+			num_spawn_by = 1,
+			place_on = {"mcl_core:"..mat},
+			sidelen = 8,
+			noise_params = {
+				offset = 0.04,
+				scale = 0.3,
+				spread = {x = 100, y = 100, z = 100},
+				seed = 421,
+				octaves = 3,
+				persist = 0.6
+			},
+			flags = "force_placement",
+			place_offset_y = -1,
+			y_min = mcl_vars.overworld_min,
+			y_max = 0,
+			decoration = "mcl_ocean:seagrass_"..mat,
+		})
+		minetest.register_decoration({
+			deco_type = "simple",
+			spawn_by = {"group:water"},
+			num_spawn_by = 1,
+			place_on = {"mcl_core:mat"},
+			sidelen = 8,
+			noise_params = {
+				offset = 0.08,
+				scale = 0.03,
+				spread = {x = 100, y = 100, z = 100},
+				seed = 421,
+				octaves = 3,
+				persist = 0.6
+			},
+			flags = "force_placement",
+			place_offset_y = -1,
+			y_min = mcl_vars.overworld_min,
+			y_max = -5,
+			decoration = "mcl_ocean:seagrass_"..mat,
+		})
+
+		minetest.register_decoration({
+			deco_type = "simple",
+			spawn_by = {"group:water"},
+			num_spawn_by = 1,
+			place_on = {"mcl_core:"..mat},
+			sidelen = 16,
+			noise_params = {
+				offset = 0.01,
+				scale = 0.01,
+				spread = {x = 300, y = 300, z = 300},
+				seed = 505,
+				octaves = 5,
+				persist = 0.62,
+			},
+			flags = "force_placement",
+			place_offset_y = -1,
+			y_min = mcl_vars.overworld_min,
+			y_max = -6,
+			decoration = "mcl_ocean:kelp_"..mat,
+			param2 = 16,
+			param2_max = 96,
+		})
+		minetest.register_decoration({
+			deco_type = "simple",
+			spawn_by = {"group:water"},
+			num_spawn_by = 1,
+			place_on = {"mcl_core:"..mat},
+			sidelen = 16,
+			noise_params = {
+				offset = 0.01,
+				scale = 0.01,
+				spread = {x = 100, y = 100, z = 100},
+				seed = 506,
+				octaves = 5,
+				persist = 0.62,
+			},
+			flags = "force_placement",
+			place_offset_y = -1,
+			y_min = mcl_vars.overworld_min,
+			y_max = -15,
+			decoration = "mcl_ocean:kelp_"..mat,
+			param2 = 32,
+			param2_max = 160,
+		})
+
+	end
+
+	-- Wet Sponge
+	-- TODO: Remove this when we got ocean monuments
+	minetest.register_decoration({
+		deco_type = "simple",
+		decoration = "mcl_sponges:sponge_wet",
+		spawn_by = {"group:water"},
+		num_spawn_by = 1,
+		place_on = {"mcl_core:dirt","mcl_core:sand"},
+		sidelen = 16,
+		noise_params = {
+			offset = 0.00295,
+			scale = 0.006,
+			spread = {x = 250, y = 250, z = 250},
+			seed = 999,
+			octaves = 3,
+			persist = 0.666
+		},
+		flags = "force_placement",
+		y_min = mcl_vars.mg_lava_overworld_max + 5,
+		y_max = -20,
+	})
+
 	-- Add a small amount of tall grass everywhere to avoid areas completely empty devoid of tall grass
 	minetest.register_decoration({
 		deco_type = "simple",
