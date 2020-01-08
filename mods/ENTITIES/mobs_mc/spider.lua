@@ -38,7 +38,7 @@ local spider = {
 	},
 	walk_velocity = 3.9,
 	jump = true,
-	jump_height = 2,
+	jump_height = 4,
 	view_range = 16,
 	floats = 1,
 	drops = {
@@ -76,10 +76,6 @@ mobs:register_mob("mobs_mc:cave_spider", cave_spider)
 
 
 mobs:spawn_specific("mobs_mc:spider", mobs_mc.spawn.solid, {"air"}, 0, 7, 30, 17000, 2, mobs_mc.spawn_height.overworld_min, mobs_mc.spawn_height.overworld_max)
-
--- compatibility
-mobs:alias_mob("mobs:spider", "mobs_mc:spider")
-mobs:alias_mob("esmobs:spider", "mobs_mc:spider")
 
 -- spawn eggs
 mobs:register_egg("mobs_mc:spider", S("Spider"), "mobs_mc_spawn_icon_spider.png", 0)

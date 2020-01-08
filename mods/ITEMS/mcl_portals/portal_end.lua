@@ -6,6 +6,21 @@ local SPAWN_MAX = mcl_vars.mg_end_min+98
 
 local mg_name = minetest.get_mapgen_setting("mg_name")
 
+local destroy_portal = function(pos)
+	local neighbors = {
+		{ x=1, y=0, z=0 },
+		{ x=-1, y=0, z=0 },
+		{ x=0, y=0, z=1 },
+		{ x=0, y=0, z=-1 },
+	}
+	for n=1, #neighbors do
+		local npos = vector.add(pos, neighbors[n])
+		if minetest.get_node(npos).name == "mcl_portals:portal_end" then
+			minetest.remove_node(npos)
+		end
+	end
+end
+
 -- End portal
 minetest.register_node("mcl_portals:portal_end", {
 	description = S("End Portal"),
@@ -46,6 +61,7 @@ minetest.register_node("mcl_portals:portal_end", {
 	light_source = 14,
 	post_effect_color = {a = 192, r = 0, g = 0, b = 0},
 	alpha = 192,
+	after_destruct = destroy_portal,
 	-- This prevents “falling through”
 	collision_box = {
 		type = "fixed",
@@ -196,11 +212,13 @@ local function end_portal_area(pos, destroy)
 	else
 		name = "mcl_portals:portal_end"
 	end
+	local posses = {}
 	for x=pos.x, pos.x+SIZE-1 do
 		for z=pos.z, pos.z+SIZE-1 do
-			minetest.set_node({x=x,y=pos.y,z=z}, {name=name})
+			table.insert(posses, {x=x,y=pos.y,z=z})
 		end
 	end
+	minetest.bulk_set_node(posses, {name=name})
 end
 
 minetest.register_abm({
@@ -397,5 +415,8 @@ minetest.override_item("mcl_end:ender_eye", {
 		end
 		return itemstack
 	end,
+})
+minetest.override_item("mcl_core:bedrock", {
+	after_destruct = destroy_portal,
 })
 

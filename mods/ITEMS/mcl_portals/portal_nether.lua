@@ -8,8 +8,8 @@ local nobj_cave = nil
 -- Portal frame sizes
 local FRAME_SIZE_X_MIN = 4
 local FRAME_SIZE_Y_MIN = 5
-local FRAME_SIZE_X_MAX = 23
-local FRAME_SIZE_Y_MAX = 23
+local FRAME_SIZE_X_MAX = 4 -- TODO: 23
+local FRAME_SIZE_Y_MAX = 5 -- TODO: 23
 
 local TELEPORT_DELAY = 3 -- seconds before teleporting in Nether portal
 local TELEPORT_COOLOFF = 4 -- after object was teleported, for this many seconds it won't teleported again

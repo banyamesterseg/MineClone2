@@ -50,8 +50,8 @@ end
 
 -- Load settings
 local damage_enabled = minetest.settings:get_bool("enable_damage")
-local mobs_spawn = minetest.settings:get_bool("mobs_spawn") ~= false
-local peaceful_only = minetest.settings:get_bool("only_peaceful_mobs")
+local mobs_spawn = minetest.settings:get_bool("mobs_spawn", true) ~= false
+
 local disable_blood = minetest.settings:get_bool("mobs_disable_blood")
 local mobs_drop_items = minetest.settings:get_bool("mobs_drop_items") ~= false
 local mobs_griefing = minetest.settings:get_bool("mobs_griefing") ~= false
@@ -65,7 +65,7 @@ local max_per_block = tonumber(minetest.settings:get("max_objects_per_block") or
 local mobs_spawn_chance = tonumber(minetest.settings:get("mobs_spawn_chance") or 2.5)
 
 -- Peaceful mode message so players will know there are no monsters
-if peaceful_only then
+if minetest.settings:get_bool("only_peaceful_mobs", false) then
 	minetest.register_on_joinplayer(function(player)
 		minetest.chat_send_player(player:get_player_name(),
 			S("Peaceful mode active! No monsters will spawn."))
@@ -1448,12 +1448,15 @@ local smart_mobs = function(self, s, p, dist, dtime)
 				end
 			end
 
-			-- will try again in 2 second
+			-- will try again in 2 seconds
 			self.path.stuck_timer = stuck_timeout - 2
-		else
-			-- yay i found path
+		elseif s.y < p1.y and (not self.fly) then
+			do_jump(self) --add jump to pathfinding
+			self.path.following = true
+			-- Yay, I found path!
 			-- TODO: Implement war_cry sound without being annoying
 			--mob_sound(self, "war_cry", true)
+		else
 			set_velocity(self, self.walk_velocity)
 
 			-- follow path now that it has it
@@ -2754,7 +2757,7 @@ local mob_activate = function(self, staticdata, def, dtime)
 
 	-- remove monsters in peaceful mode
 	if self.type == "monster"
-	and peaceful_only then
+	and minetest.settings:get_bool("only_peaceful_mobs", false) then
 
 		self.object:remove()
 
@@ -2869,6 +2872,12 @@ local mob_activate = function(self, staticdata, def, dtime)
 	self.opinion_sound_cooloff = 0 -- used to prevent sound spam of particular sound types
 
 	self.texture_mods = {}
+	self.object:set_texture_mod("")
+
+	self.v_start = false
+	self.timer = 0
+	self.blinktimer = 0
+	self.blinkstatus = false
 
 	-- check existing nametag
 	if not self.nametag then
@@ -3130,9 +3139,17 @@ local function scale_difficulty(value, default, min, special)
 	end
 end
 
+local collisionbox = def.collisionbox or {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25}
+-- Workaround for <https://github.com/minetest/minetest/issues/5966>:
+-- Increase upper Y limit to avoid mobs glitching through solid nodes.
+-- FIXME: Remove workaround if it's no longer needed.
+if collisionbox[5] < 0.79 then
+	collisionbox[5] = 0.79
+end
+
 minetest.register_entity(name, {
 
-	stepheight = def.stepheight or 1.1, -- was 0.6
+	stepheight = def.stepheight or 0.6,
 	name = name,
 	type = def.type,
 	attack_type = def.attack_type,
@@ -3152,7 +3169,7 @@ minetest.register_entity(name, {
 	breath_max = def.breath_max or 15,
         breathes_in_water = def.breathes_in_water or false,
 	physical = true,
-	collisionbox = def.collisionbox or {-0.25, -0.25, -0.25, 0.25, 0.25, 0.25},
+	collisionbox = collisionbox,
 	selectionbox = def.selectionbox or def.collisionbox,
 	visual = def.visual,
 	visual_size = def.visual_size or {x = 1, y = 1},
@@ -3749,6 +3766,12 @@ function mobs:register_egg(mob, desc, background, addegg, no_creative)
 				end
 
 				if not minetest.registered_entities[mob] then
+					return itemstack
+				end
+
+				if minetest.settings:get_bool("only_peaceful_mobs", false)
+						and minetest.registered_entities[mob].type == "monster" then
+					minetest.chat_send_player(name, S("Only peaceful mobs allowed!"))
 					return itemstack
 				end
 
